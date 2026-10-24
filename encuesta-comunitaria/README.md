@@ -44,3 +44,12 @@ delete from public.encuesta_comunitaria
 where es_prueba is true and lote_prueba='ISFT93-DEMO-20261024-01';
 ```
 No borrar encuestas sin marca de prueba ni otros lotes.
+
+## Tablero visual (2026-10-24)
+- **Vista general:** enfermedades, contaminación ambiental y cobertura médica en tres tortas; edades en barras a la derecha de enfermedades.
+- **Vista filtrada:** al seleccionar una pregunta, enfermedad, edad o fechas, se muestra una sola torta y las barras de edades del mismo segmento.
+- Franjas sin doble contabilización: 0–19, 20–39, 40–59, 60–79 y 80–100; 101–120 solo si existen encuestados.
+- Colores vivos por categoría, leyendas, porcentaje de menciones y desglose CSV.
+- Migración principal: `reporte_dashboard.sql`, aplicada a Supabase; llama a la RPC existente `reporte_encuesta` para las tortas.
+- Se añadieron **20 encuestas ficticias más** al lote `ISFT93-DEMO-20261024-01`. Hay ahora **25 ficticias en ese lote**, identificadas con `es_prueba=true`; también había 1 encuesta sin marca de prueba, que se preserva.
+- El comando de limpieza anterior borra las **25** muestras de ese lote, pero solo cuando se solicite expresamente.
