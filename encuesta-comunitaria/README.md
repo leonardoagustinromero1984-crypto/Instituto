@@ -1,33 +1,29 @@
-# Encuesta sociocomunitaria · ISFT N° 93
+# Encuesta sociocomunitaria · ISFT N.º 93
 
-Nueva aplicación independiente de las otras carpetas del repositorio Instituto.
+Aplicación independiente de los módulos existentes de Instituto.
 
-## Accesos
-- Carga: `/encuesta-comunitaria/`
-- Reportes: `/encuesta-comunitaria/reporte.html`
+## Enlaces publicados
+- Carga: https://leonardoagustinromero1984-crypto.github.io/Instituto/encuesta-comunitaria/
+- Reportes: https://leonardoagustinromero1984-crypto.github.io/Instituto/encuesta-comunitaria/reporte.html
 
-## Instalación (pendiente de configurar por titular)
-1. Crear un proyecto Supabase dedicado. Ejecutar `schema.sql` desde el SQL Editor.
-2. Completar `config.js` con **Project URL** y **publishable/anon key**. Nunca incluir la **service_role key**.
-3. Habilitar Authentication con email y contraseña y crear manualmente las cuentas de los compañeros que puedan ver reportes. Autorizar sólo a quienes puedan consultar: después de crear cada cuenta, copiar su UID desde Authentication → Users y ejecutar en SQL Editor: `insert into public.encuesta_reporteros(user_id) values ('UUID-DEL-USUARIO');`. No habilitar altas públicas para el reporte.
-4. Publicar GitHub Pages de la rama principal una vez revisada la funcionalidad; esta implementación vive inicialmente en una rama de trabajo.
-5. Crear dos QR distintos a partir de las URL reales de carga y reporte, una vez publicada la versión estable.
+## Infraestructura
+- GitHub Pages publica desde `master` (carpeta raíz).
+- Proyecto Supabase: `tueivdkqbgzsybxxqnhr`.
+- Configuración pública en `config.js` (solo URL y publishable key; **jamás** contraseñas ni service_role).
+- Esquema de referencia en `schema.sql`, migraciones aplicadas en Supabase.
 
-## Características
-- Encuestas anónimas sin nombre ni DNI; preguntas opcionales salvo fecha y aceptación.
-- Las secciones se basan en el documento `ENCUESTA 26(1).docx`. La opción repetida «Cena» en la pregunta 18 se normalizó como «Almuerzo»; verificarlo con el docente.
-- Varias respuestas seleccionables para enfermedades, servicios, alimentación y contaminación.
-- Filtros de reporte por edad, enfermedad y fechas; selector por pregunta/sección.
-- Gráficos de torta y barras; CSV con resultados agregados.
-- RLS: la API pública puede insertar, no leer ni borrar registros individuales.
-- RPC de resumen para usuarios autenticados y supresión de categorías con menos de 3 ocurrencias.
+## Funcionalidad
+- Encuesta sin nombres, DNI ni identificación directa. Aceptación voluntaria, fecha requerida y preguntas opcionales.
+- Basada en el documento entregado `ENCUESTA 26(1).docx`. La pregunta 18 traía «Cena» repetida: se sustituyó provisionalmente una por «Almuerzo»; validar con docente.
+- Enfermedades, servicios, alimentos y contaminación admiten varias opciones.
+- Reportes públicos **sin inicio de sesión**: filtros por edad, enfermedad y fechas, pregunta/sección, torta, barras, CSV de resultados agregados.
+- Seguridad: usuarios anónimos pueden insertar encuestas, **no** leer, modificar ni borrar registros individuales. Una función PostgreSQL privilegiada devuelve solo conteos permitidos.
+- Protección estadística básica: no se entregan resultados si un segmento tiene entre 1 y 4 personas y se ocultan categorías con menos de 3 menciones.
 
-## Antes de usar con personas reales
-- Confirmar la revisión del formulario y consentimiento con la institución.
-- Limitar quién puede crear cuentas y acceder a reportes. Los informes por filtros muy estrechos pueden revelar información incluso sin nombres; incrementar umbral y limitar filtros si hace falta.
-- Añadir anti-spam/rate limiting, política de conservación/borrado de datos, respaldo y aviso de privacidad institucional.
-- Validar pruebas multiusuario, móviles y operación real de base de datos.
-- No se han cargado datos de personas ni activado un servicio de producción.
+## Importante
+El reporte es accesible para cualquier persona con la dirección web. La supresión de grupos pequeños **no garantiza anonimato absoluto** frente a comparaciones de múltiples filtros; revisar con la institución antes de encuestar personas reales y considerar restringir el reporte en ese escenario. Implementar medidas contra cargas maliciosas, revisión de tratamiento de datos de salud, respaldo y política de conservación. No usar nombres ni datos identificables en textos libres.
 
-## Privacidad
-Las respuestas incluyen posibles datos de salud; deben tratarse con controles de acceso y minimización. Este prototipo requiere endurecimiento de permisos antes de producción.
+## Pruebas
+- Comprobada migración y configuración de permisos SQL.
+- Comprobado el despliegue exitoso de GitHub Pages.
+- Pendiente prueba manual de extremo a extremo con un navegador real y al menos una encuesta de prueba.
