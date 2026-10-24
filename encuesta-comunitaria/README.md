@@ -18,10 +18,10 @@ Aplicación independiente de los módulos existentes de Instituto.
 - Enfermedades, servicios, alimentos y contaminación admiten varias opciones.
 - Reportes públicos **sin inicio de sesión**: filtros por edad, enfermedad y fechas, pregunta/sección, torta, barras, CSV de resultados agregados.
 - Seguridad: usuarios anónimos pueden insertar encuestas, **no** leer, modificar ni borrar registros individuales. Una función PostgreSQL privilegiada devuelve solo conteos permitidos.
-- Protección estadística básica: no se entregan resultados si un segmento tiene entre 1 y 4 personas y se ocultan categorías con menos de 3 menciones.
+- Los resultados se muestran desde una sola encuesta, incluyendo rangos de edad y categorías de una respuesta.
 
 ## Importante
-El reporte es accesible para cualquier persona con la dirección web. La supresión de grupos pequeños **no garantiza anonimato absoluto** frente a comparaciones de múltiples filtros; revisar con la institución antes de encuestar personas reales y considerar restringir el reporte en ese escenario. Implementar medidas contra cargas maliciosas, revisión de tratamiento de datos de salud, respaldo y política de conservación. No usar nombres ni datos identificables en textos libres.
+El reporte es accesible para cualquier persona con la dirección web. **Con una sola encuesta, las estadísticas pueden revelar información de salud de esa persona.** Antes de recopilar información real, revisar con la institución y restringir el acceso al reporte. Implementar medidas contra cargas maliciosas, revisión de tratamiento de datos de salud, respaldo y política de conservación. No usar nombres ni datos identificables en textos libres.
 
 ## Pruebas
 - Comprobada migración y configuración de permisos SQL.
@@ -31,7 +31,7 @@ El reporte es accesible para cualquier persona con la dirección web. La supresi
 ## Limpieza de registros ficticios (2026-10-24)
 Se eliminaron las 25 encuestas ficticias que pertenecían al lote `ISFT93-DEMO-20261024-01` y tenían `es_prueba=true`. Se verificó que quedaba **1 encuesta sin marca de prueba**; el lote ficticio quedó vacío.
 
-El reporte final ya no muestra leyendas ni indicadores sobre encuestas de prueba. Se conserva la protección de grupos pequeños (mínimo cinco encuestas para visualizar estadísticas).
+El reporte final ya no muestra avisos ni contadores de pruebas. Desde el 24/10/2026 se muestran estadísticas desde una sola encuesta, conforme a la indicación del usuario.
 
 ## Tablero visual (2026-10-24)
 - **Vista general:** enfermedades, contaminación ambiental y cobertura médica en tres tortas; edades en barras a la derecha de enfermedades.
