@@ -1,6 +1,6 @@
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reporte de encuesta | Instituto</title><link rel="stylesheet" href="style.css"></head><body>
 <header><div class="shell"><div class="brand"><div class="mark" aria-label="Identificación ISFT 93">93</div><div><small>ISFT N.º 93 · Tecnicatura Superior en Enfermería</small><strong>Panel de investigación comunitaria</strong></div></div><span class="kicker">Análisis estadístico</span><h1>Resultados de la encuesta</h1><p>Indicadores generales y por segmentos para el diagnóstico sociocomunitario.</p><a href="index.html">Ir a la carga</a></div></header><main class="shell">
-<section class="card" id="acceso"><h2>Acceso protegido</h2><p class="muted">Los reportes requieren la cuenta admin autorizada en Supabase. No se muestran encuestas individuales.</p><form id="login"><div class="grid"><div><label>Usuario</label><input type="text" id="correo" value="admin" autocomplete="username" required></div><div><label>Contraseña</label><input type="password" id="clave" required></div></div><p><button>Ingresar</button></p><p id="loginEstado" role="status"></p></form></section>
+<section class="card" id="acceso"><h2>Acceso protegido</h2><p class="muted">Los reportes requieren la cuenta admin autorizada en Supabase. No se muestran encuestas individuales.</p><form id="login"><div class="grid"><div><label>Usuario</label><input type="text" id="correo" value="admin" autocomplete="username" required></div><div><label for="clave">Contraseña</label><input type="password" id="clave" autocomplete="current-password" required><label class="show-password"><input type="checkbox" id="mostrarClave"> Mostrar contraseña</label></div></div><p><button>Ingresar</button></p><p id="loginEstado" role="status"></p></form></section>
 <div id="dashboard" class="hide"><section class="card"><div class="actions"><h2>Filtros del reporte</h2><button id="salir" type="button">Salir</button></div>
 <div class="grid"><div><label for="campo">Pregunta / sección</label><select id="campo"></select></div><div><label>Edad desde</label><input type="number" id="minEdad" min="0" max="120"></div><div><label>Edad hasta</label><input type="number" id="maxEdad" min="0" max="120"></div><div><label>Enfermedad</label><select id="enfermedad"><option value="">Todas</option></select></div><div><label>Fecha desde</label><input type="date" id="desde"></div><div><label>Fecha hasta</label><input type="date" id="hasta"></div></div>
 <p class="actions"><button id="consultar" type="button">Actualizar gráficos</button><button id="limpiar" type="button">Quitar filtros</button></p></section>
@@ -10,6 +10,7 @@
 <footer>Los resultados son estadísticos, no historias clínicas ni registros identificables.</footer></main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script><script src="config.js"></script><script src="preguntas.js"></script><script>
 const cfg=ENCUESTA_CONFIG,$=id=>document.getElementById(id);
+$('mostrarClave').addEventListener('change',()=>{$('clave').type=$('mostrarClave').checked?'text':'password'});
 let client=null,torta=null,barras=null,ultimos=[];
 for(const opt of ENCUESTA_CAMPOS_REPORTE){const o=new Option(opt.label,opt.value);$('campo').add(o)}
 for(const x of ['Hipertensión','Diabetes','Enfermedades respiratorias','Oncológicas','Otras'])$('enfermedad').add(new Option(x,x));
@@ -21,7 +22,9 @@ function mostrar(){$('acceso').classList.add('hide');$('dashboard').classList.re
 $('login').addEventListener('submit',async e=>{
  e.preventDefault();if(!client)return;
  $('loginEstado').textContent='Ingresando…';
- const {error}=await client.auth.signInWithPassword({email:$('correo').value,password:$('clave').value});
+ const alias=$('correo').value.trim().toLowerCase();
+ if(alias!=='admin'){$('loginEstado').textContent='Usuario no autorizado';return}
+ const {error}=await client.auth.signInWithPassword({email:'admin@instituto93.test',password:$('clave').value});
  if(error){$('loginEstado').textContent=error.message;return}mostrar()
 });
 $('salir').onclick=async()=>{await client.auth.signOut();location.reload()};
