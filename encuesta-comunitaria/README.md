@@ -9,7 +9,7 @@ Nueva aplicación independiente de las otras carpetas del repositorio Instituto.
 ## Instalación (pendiente de configurar por titular)
 1. Crear un proyecto Supabase dedicado. Ejecutar `schema.sql` desde el SQL Editor.
 2. Completar `config.js` con **Project URL** y **publishable/anon key**. Nunca incluir la **service_role key**.
-3. Habilitar Authentication con email y contraseña y crear manualmente las cuentas de los compañeros que puedan ver reportes. **Antes de producción**, restringir la función de reporte a una lista de usuarios autorizados; no habilitar altas públicas de usuarios para el reporte.
+3. Habilitar Authentication con email y contraseña y crear manualmente las cuentas de los compañeros que puedan ver reportes. Autorizar sólo a quienes puedan consultar: después de crear cada cuenta, copiar su UID desde Authentication → Users y ejecutar en SQL Editor: `insert into public.encuesta_reporteros(user_id) values ('UUID-DEL-USUARIO');`. No habilitar altas públicas para el reporte.
 4. Publicar GitHub Pages de la rama principal una vez revisada la funcionalidad; esta implementación vive inicialmente en una rama de trabajo.
 5. Crear dos QR distintos a partir de las URL reales de carga y reporte, una vez publicada la versión estable.
 
