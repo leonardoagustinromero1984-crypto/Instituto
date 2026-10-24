@@ -118,3 +118,8 @@ header h1{overflow-wrap:break-word}
   .stat-tile{padding:13px 11px}
   .heading-with-icon{flex-wrap:wrap}
 }
+
+/* El tablero definitivo muestra un único contador: total de encuestas. */
+.stats-layout{grid-template-columns:minmax(0,1fr)}
+.stats-layout .stat-tile{width:100%}
+@media(max-width:800px){.stats-layout{grid-template-columns:minmax(0,1fr)}.stats-layout .stat-tile:last-child{grid-column:auto}}
