@@ -147,15 +147,15 @@
    afterDatasetsDraw(chart){
      const datos=chart.$datosEdades||[],total=chart.$totalEncuestados;
      const meta=chart.getDatasetMeta(0),ctx=chart.ctx;
-     ctx.save();ctx.fillStyle='#18364c';ctx.textAlign='center';ctx.textBaseline='bottom';
-     ctx.font='700 12px system-ui, sans-serif';
+     ctx.save();ctx.fillStyle='#18364c';ctx.textAlign='center';ctx.textBaseline='middle';
      meta.data.forEach((bar,i)=>{
        const item=datos[i],n=Number(item?.cantidad);
        if(!item||item.oculto||!Number.isFinite(n))return;
-       const pct=total>0?' · '+fmtPorcentaje(n/total*100):'';
-       const label=n+pct;
-       const y=Math.max(chart.chartArea.top+14,bar.y-7);
-       ctx.fillText(label,bar.x,y);
+       const y=Math.max(chart.chartArea.top+20,bar.y-20);
+       ctx.font='800 12px system-ui, sans-serif';
+       ctx.fillText(String(n),bar.x,y,Math.max(28,bar.width+14));
+       ctx.font='700 10px system-ui, sans-serif';
+       if(total>0)ctx.fillText(fmtPorcentaje(n/total*100),bar.x,y+13,Math.max(30,bar.width+17));
      });
      ctx.restore();
    }
@@ -203,7 +203,7 @@
      }]},
      options:{
        responsive:true,maintainAspectRatio:false,
-       layout:{padding:{top:20}},
+       layout:{padding:{top:35}},
        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>barrasDatos[ctx.dataIndex]?.oculto?'Cantidad reservada (1 o 2 personas)':' '+ctx.parsed.y+' personas'}}},
        scales:{
          x:{grid:{display:false},ticks:{color:'#405B71',maxRotation:30,minRotation:0}},
