@@ -1,1 +1,50 @@
 :root{font-family:Inter,system-ui,-apple-system,Segoe UI,Arial,sans-serif;color:#173146;background:#f2f6fb;font-synthesis:none}*{box-sizing:border-box}body{margin:0;line-height:1.55}header{color:#fff;background:linear-gradient(130deg,#063e5a,#087e8c 78%,#009aa6);box-shadow:0 9px 22px #123c561f}header .shell{padding:30px 20px 25px}.shell{max-width:1080px;margin:auto;padding:22px 18px 75px}.brand{display:flex;align-items:center;gap:16px;margin-bottom:15px}.mark{display:grid;place-items:center;flex-shrink:0;width:68px;height:68px;background:#fff;color:#04576a;border-radius:17px;border:3px solid #aee9eb;box-shadow:0 7px 18px #032d3f55;font-weight:900;font-size:27px}.brand small{display:block;opacity:.83;letter-spacing:.045em}.brand strong{display:block;font-size:clamp(1rem,3vw,1.4rem)}h1{font-size:clamp(1.65rem,4vw,2.65rem);line-height:1.15;margin:6px 0 10px}h2{font-size:1.25rem;margin:0 0 18px;color:#075770}header a{color:white}header p{color:#e3faff;max-width:680px}.card{background:white;border:1px solid #d9e5ef;border-radius:18px;margin:20px 0;padding:clamp(16px,3vw,30px);box-shadow:0 9px 25px #102d4410}label{display:block;font-weight:650;margin:14px 0 6px}input,select,button{font:inherit;padding:11px 13px;border:1px solid #aabfcf;border-radius:10px;max-width:100%}input[type=date],input[type=number],input[type=text],select,input[type=email],input[type=password]{width:100%;min-height:44px;background:white}input[type=checkbox],input[type=radio]{width:auto;accent-color:#087d91}.choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:9px}.choices label{display:flex;align-items:center;gap:9px;background:#f8fbfc;padding:12px;border:1px solid #dce7ee;border-radius:10px;font-weight:500;margin:2px 0;cursor:pointer}.choices label:has(input:checked){background:#dff6f5;border-color:#06969b}.choices input{margin:0}button{background:#04788c;border-color:#04788c;color:white;cursor:pointer;font-weight:750;transition:background .2s,transform .2s}button:hover{background:#06566e;transform:translateY(-1px)}button:disabled{opacity:.5;cursor:not-allowed}.muted{color:#5b6d7b}.note{background:#e9f6fa;padding:14px 16px;border-left:4px solid #0697a0;border-radius:8px}.actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}.stat{font-size:2.4rem;font-weight:800;color:#057589}.chart{max-height:370px;width:100%}.hide{display:none}.err{color:#b21b38}.ok{color:#006e4b;font-weight:750}footer{font-size:.87rem;color:#5f7580;margin-top:30px}.step{font-size:.78rem;color:#057d8c;text-transform:uppercase;font-weight:800;letter-spacing:.07em}.hr{height:1px;background:#e3edf3;margin:16px 0}.kicker{display:inline-block;background:#d6fbfa;color:#075969;border-radius:50px;padding:5px 13px;font-size:.8rem;font-weight:800}@media(max-width:580px){.choices{grid-template-columns:1fr}.card{margin:14px 0}.mark{width:54px;height:54px;font-size:21px}}.show-password{display:flex;align-items:center;gap:10px;font-weight:500;color:#386176;font-size:.92rem;cursor:pointer;margin-top:10px}.show-password input{width:18px;height:18px;flex-shrink:0}
+
+
+/* Tablero estadístico · ISFT 93 */
+.dashboard-page{max-width:1190px}
+.filters-card{background:linear-gradient(180deg,#ffffff,#f9fcff)}
+.heading-with-icon{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.filter-icon{font-size:1.7rem;background:#e7f7fa;color:#0e6f85;width:48px;height:48px;border-radius:15px;text-align:center;line-height:48px}
+.filter-actions{margin-top:20px}
+.outline-button{background:#fff;border:1px solid #93b9c8;color:#066784}
+.outline-button:hover{background:#edf8fa;color:#074d62}
+.demo-alert{margin:18px 0;padding:17px 22px;border-radius:14px;color:#613804;background:#fff2cd;border:1px solid #f4ce77;font-weight:700}
+.stats-layout{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin:20px 0}
+.stat-tile{background:linear-gradient(135deg,#fff,#f2fbfd);padding:19px 22px;border-radius:16px;border:1px solid #d5e5ed;box-shadow:0 6px 18px #123e5a0b}
+.stat-tile span{display:block;color:#55707e;font-size:.9rem;font-weight:650}
+.stat-tile .stat{margin-top:4px;font-size:2.3rem;line-height:1.2}
+.view-top{margin:28px 0 18px}
+.section-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.view-top h2{margin:3px 0}
+.pill{border:1px solid #aee0e5;background:#ebfbfc;color:#007889;border-radius:999px;padding:7px 13px;font-weight:750;font-size:.82rem}
+.dashboard-pairs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin:16px 0}
+.dashboard-pairs .chart-card{margin:0}
+.chart-card{border-radius:20px;min-width:0;padding:24px 22px}
+.chart-card h3{font-size:1.27rem;color:#15384b;margin:4px 0 8px;line-height:1.2}
+.chart-eyebrow{color:#087f91;font-size:.75rem;letter-spacing:.085em;text-transform:uppercase;font-weight:800}
+.chart-caption{font-size:.87rem;margin:0 0 18px;min-height:28px}
+.canvas-wrap{height:310px;max-width:100%;position:relative}
+.canvas-wrap canvas{max-width:100%;width:100%!important;height:100%!important}
+.chart-footnote{font-size:.78rem;line-height:1.5;margin:10px 0 0}
+.empty-chart{text-align:center;background:#eff6fb;border-radius:12px;padding:18px;color:#64748b}
+.table-scroll{overflow-x:auto;margin-top:12px}
+.table-scroll table{width:100%;border-collapse:collapse;font-size:.94rem}
+.table-scroll th{text-align:left;color:#215169;background:#eaf6fb}
+.table-scroll th,.table-scroll td{padding:13px 12px;border-bottom:1px solid #dfeaf0}
+.table-scroll tr:nth-child(even){background:#fbfdff}
+.fine-print{font-size:.84rem;line-height:1.6;margin:14px 0 0}
+.status-message{padding:0 3px}
+@media(max-width:800px){
+  .dashboard-pairs{grid-template-columns:1fr}
+  .canvas-wrap{height:320px}
+}
+@media(max-width:580px){
+  .stats-layout{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .stat-tile{padding:14px 12px}
+  .stat-tile:last-child{grid-column:1 / -1}
+  .stat-tile .stat{font-size:2rem}
+  .canvas-wrap{height:285px}
+  .chart-card{padding:20px 14px}
+  .chart-caption{min-height:0}
+}
