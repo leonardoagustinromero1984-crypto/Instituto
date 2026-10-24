@@ -132,13 +132,13 @@
    if(!rows.length){return []}
    const valores=rows.map(x=>x.cantidad),suma=valores.reduce((a,b)=>a+b,0);
    pies[canvasId]=new Chart($(canvasId),{
-     type:'doughnut',
+     type:'pie',
      data:{
        labels:rows.map(x=>x.etiqueta),
        datasets:[{data:valores,backgroundColor:rows.map((x,i)=>x.etiqueta==='Otras respuestas agrupadas'?'#A2AFBE':paleta[i%paleta.length]),borderColor:'#fff',borderWidth:3,hoverOffset:9}]
      },
      options:{
-       responsive:true,maintainAspectRatio:false,cutout:'46%',
+       responsive:true,maintainAspectRatio:false,
        plugins:{
          legend:{position:'bottom',labels:{usePointStyle:true,padding:13,boxWidth:12,font:{size:12,weight:'600'}}},
          tooltip:{callbacks:{label:ctx=>' '+ctx.label+': '+ctx.parsed+' ('+(suma?((ctx.parsed/suma)*100).toFixed(1):'0')+'% de menciones)'}}
