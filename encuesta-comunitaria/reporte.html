@@ -1,42 +1,28 @@
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reporte de encuesta | Instituto</title><link rel="stylesheet" href="style.css"></head><body>
 <header><div class="shell"><div class="brand"><div class="mark" aria-label="Identificación ISFT 93">93</div><div><small>ISFT N.º 93 · Tecnicatura Superior en Enfermería</small><strong>Panel de investigación comunitaria</strong></div></div><span class="kicker">Análisis estadístico</span><h1>Resultados de la encuesta</h1><p>Indicadores generales y por segmentos para el diagnóstico sociocomunitario.</p><a href="index.html">Ir a la carga</a></div></header><main class="shell">
-<section class="card" id="acceso"><h2>Acceso protegido</h2><p class="muted">Los reportes requieren la cuenta admin autorizada en Supabase. No se muestran encuestas individuales.</p><form id="login"><div class="grid"><div><label>Usuario</label><input type="text" id="correo" value="admin" autocomplete="username" required></div><div><label for="clave">Contraseña</label><input type="password" id="clave" autocomplete="current-password" required><label class="show-password"><input type="checkbox" id="mostrarClave"> Mostrar contraseña</label></div></div><p><button>Ingresar</button></p><p id="loginEstado" role="status"></p></form></section>
-<div id="dashboard" class="hide"><section class="card"><div class="actions"><h2>Filtros del reporte</h2><button id="salir" type="button">Salir</button></div>
+<div id="dashboard"><section class="note" role="note">Reporte de acceso libre: contiene únicamente resultados agrupados. Las encuestas individuales no están disponibles para consulta.</section><section class="card"><div class="actions"><h2>Filtros del reporte</h2></div>
 <div class="grid"><div><label for="campo">Pregunta / sección</label><select id="campo"></select></div><div><label>Edad desde</label><input type="number" id="minEdad" min="0" max="120"></div><div><label>Edad hasta</label><input type="number" id="maxEdad" min="0" max="120"></div><div><label>Enfermedad</label><select id="enfermedad"><option value="">Todas</option></select></div><div><label>Fecha desde</label><input type="date" id="desde"></div><div><label>Fecha hasta</label><input type="date" id="hasta"></div></div>
 <p class="actions"><button id="consultar" type="button">Actualizar gráficos</button><button id="limpiar" type="button">Quitar filtros</button></p></section>
-<section class="card"><h2>Resultado general y segmentado</h2><p class="muted">Cada opción se cuenta por separado en las preguntas de selección múltiple. Se omiten categorías con menos de 3 respuestas para reducir la exposición de grupos pequeños.</p><div class="grid"><div><div class="stat" id="total">—</div><div>Personas encuestadas en el segmento</div></div><div><div class="stat" id="suprimidos">—</div><div>Respuestas en categorías pequeñas no mostradas</div></div></div><p id="mensaje" role="status"></p></section>
+<section class="card"><h2>Resultado general y segmentado</h2><p class="muted">Cada opción se cuenta por separado en preguntas múltiples. Se ocultan categorías con menos de 3 respuestas y segmentos de menos de 5 personas.</p><div class="grid"><div><div class="stat" id="total">—</div><div>Personas encuestadas en el segmento</div></div><div><div class="stat" id="suprimidos">—</div><div>Respuestas en categorías pequeñas no mostradas</div></div></div><p id="mensaje" role="status"></p></section>
 <div class="grid"><section class="card"><h2>Gráfico de torta</h2><canvas id="torta" class="chart" aria-label="Distribución porcentual"></canvas></section><section class="card"><h2>Gráfico de barras</h2><canvas id="barras" class="chart" aria-label="Cantidad por respuesta"></canvas></section></div>
 <section class="card"><h2>Tabla de resultados</h2><div id="tabla"></div><button id="csv" type="button">Descargar CSV agregado</button></section></div>
 <footer>Los resultados son estadísticos, no historias clínicas ni registros identificables.</footer></main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script><script src="config.js"></script><script src="preguntas.js"></script><script>
 const cfg=ENCUESTA_CONFIG,$=id=>document.getElementById(id);
-$('mostrarClave').addEventListener('change',()=>{$('clave').type=$('mostrarClave').checked?'text':'password'});
 let client=null,torta=null,barras=null,ultimos=[];
-for(const opt of ENCUESTA_CAMPOS_REPORTE){const o=new Option(opt.label,opt.value);$('campo').add(o)}
+for(const opt of ENCUESTA_CAMPOS_REPORTE){$('campo').add(new Option(opt.label,opt.value))}
 for(const x of ['Hipertensión','Diabetes','Enfermedades respiratorias','Oncológicas','Otras'])$('enfermedad').add(new Option(x,x));
-if(cfg.supabaseUrl&&cfg.supabaseAnonKey){
- client=supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey);
- client.auth.getSession().then(({data})=>{if(data.session)mostrar()})
-}else $('loginEstado').textContent='Falta configurar la base de datos.';
-function mostrar(){$('acceso').classList.add('hide');$('dashboard').classList.remove('hide');consultar()}
-$('login').addEventListener('submit',async e=>{
- e.preventDefault();if(!client)return;
- $('loginEstado').textContent='Ingresando…';
- const alias=$('correo').value.trim().toLowerCase();
- if(alias!=='admin'){$('loginEstado').textContent='Usuario no autorizado';return}
- const {error}=await client.auth.signInWithPassword({email:'admin@instituto93.test',password:$('clave').value});
- if(error){$('loginEstado').textContent=error.message;return}mostrar()
-});
-$('salir').onclick=async()=>{await client.auth.signOut();location.reload()};
+if(cfg.supabaseUrl&&cfg.supabaseAnonKey){client=supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey)}
 $('limpiar').onclick=()=>{for(const id of ['minEdad','maxEdad','enfermedad','desde','hasta'])$(id).value='';consultar()};
 $('consultar').onclick=consultar;
 async function consultar(){
  const parametros={p_campo:$('campo').value,p_edad_desde:$('minEdad').value===''?null:Number($('minEdad').value),p_edad_hasta:$('maxEdad').value===''?null:Number($('maxEdad').value),p_enfermedad:$('enfermedad').value||null,p_fecha_desde:$('desde').value||null,p_fecha_hasta:$('hasta').value||null};
  if(parametros.p_edad_desde!==null&&parametros.p_edad_hasta!==null&&parametros.p_edad_desde>parametros.p_edad_hasta){$('mensaje').textContent='Rango de edad inválido';return}
+ if(!client){$('mensaje').textContent='No está configurada la conexión con la base de datos';return}
  $('mensaje').textContent='Consultando…';
  const {data,error}=await client.rpc('reporte_encuesta',parametros);
  if(error){$('mensaje').textContent='No se pudo consultar: '+error.message;return}
- $('mensaje').textContent='';$('total').textContent=data.total;$('suprimidos').textContent=data.suprimidos;
+ $('mensaje').textContent=data.mensaje||'';$('total').textContent=data.total??'—';$('suprimidos').textContent=data.suprimidos??'—';
  ultimos=data.datos||[];const labels=ultimos.map(x=>x.etiqueta),valores=ultimos.map(x=>x.cantidad);
  if(torta)torta.destroy();if(barras)barras.destroy();
  const colors=['#007a9a','#3c91bd','#71bdd0','#f1b95d','#e57e6e','#7e86b8','#55a890','#d5a0cc'];
@@ -51,4 +37,5 @@ $('csv').onclick=()=>{
  const csv=lines.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\r\n');
  const link=document.createElement('a');link.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));link.download='reporte_encuesta.csv';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000);
 };
+if(client)consultar();else $('mensaje').textContent='Falta configurar la base de datos.';
 </script></body></html>
