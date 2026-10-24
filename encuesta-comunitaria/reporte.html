@@ -3,6 +3,7 @@
 <div id="dashboard"><section class="note" role="note">Reporte de acceso libre: contiene únicamente resultados agrupados. Las encuestas individuales no están disponibles para consulta.</section><section class="card"><div class="actions"><h2>Filtros del reporte</h2></div>
 <div class="grid"><div><label for="campo">Pregunta / sección</label><select id="campo"></select></div><div><label>Edad desde</label><input type="number" id="minEdad" min="0" max="120"></div><div><label>Edad hasta</label><input type="number" id="maxEdad" min="0" max="120"></div><div><label>Enfermedad</label><select id="enfermedad"><option value="">Todas</option></select></div><div><label>Fecha desde</label><input type="date" id="desde"></div><div><label>Fecha hasta</label><input type="date" id="hasta"></div></div>
 <p class="actions"><button id="consultar" type="button">Actualizar gráficos</button><button id="limpiar" type="button">Quitar filtros</button></p></section>
+<section id="avisoPruebas" class="note hide" role="status"></section>
 <section class="card"><h2>Resultado general y segmentado</h2><p class="muted">Cada opción se cuenta por separado en preguntas múltiples. Se ocultan categorías con menos de 3 respuestas y segmentos de menos de 5 personas.</p><div class="grid"><div><div class="stat" id="total">—</div><div>Personas encuestadas en el segmento</div></div><div><div class="stat" id="suprimidos">—</div><div>Respuestas en categorías pequeñas no mostradas</div></div></div><p id="mensaje" role="status"></p></section>
 <div class="grid"><section class="card"><h2>Gráfico de torta</h2><canvas id="torta" class="chart" aria-label="Distribución porcentual"></canvas></section><section class="card"><h2>Gráfico de barras</h2><canvas id="barras" class="chart" aria-label="Cantidad por respuesta"></canvas></section></div>
 <section class="card"><h2>Tabla de resultados</h2><div id="tabla"></div><button id="csv" type="button">Descargar CSV agregado</button></section></div>
@@ -23,7 +24,13 @@ async function consultar(){
  const {data,error}=await client.rpc('reporte_encuesta',parametros);
  if(error){$('mensaje').textContent='No se pudo consultar: '+error.message;return}
  $('mensaje').textContent=data.mensaje||'';$('total').textContent=data.total??'—';$('suprimidos').textContent=data.suprimidos??'—';
- ultimos=data.datos||[];const labels=ultimos.map(x=>x.etiqueta),valores=ultimos.map(x=>x.cantidad);
+ const aviso=$('avisoPruebas'),pruebas=Number(data.total_pruebas||0);
+ aviso.classList.toggle('hide',pruebas===0);
+ aviso.textContent=pruebas>0?'⚠️ DATOS DE PRUEBA: este resultado incluye '+pruebas+' encuesta(s) ficticia(s), identificadas para su eliminación posterior. No usar como diagnóstico real.':'';
+ ultimos=data.datos||[];
+ const visuales=[...ultimos];const ocultas=Number(data.suprimidos||0);
+ if(ocultas>0)visuales.push({etiqueta:'Otras respuestas (agrupadas)',cantidad:ocultas});
+ const labels=visuales.map(x=>x.etiqueta),valores=visuales.map(x=>x.cantidad);
  if(torta)torta.destroy();if(barras)barras.destroy();
  const colors=['#007a9a','#3c91bd','#71bdd0','#f1b95d','#e57e6e','#7e86b8','#55a890','#d5a0cc'];
  torta=new Chart($('torta'),{type:'pie',data:{labels,datasets:[{data:valores,backgroundColor:labels.map((_,i)=>colors[i%colors.length])}]},options:{responsive:true}});
