@@ -1,6 +1,7 @@
 -- SQL de función dashboard (ya aplicada a Supabase).
 -- Incluye tres indicadores, gráfico de edades y filtros de segmento.
--- El acceso público recibe únicamente estadísticas agregadas.
+-- Reporte público agregado, incluso cuando un segmento tiene una sola respuesta.
+-- Advertencia: una respuesta única puede revelar datos sensibles.
 
 CREATE OR REPLACE FUNCTION public.reporte_dashboard(p_campo text DEFAULT NULL::text, p_edad_desde integer DEFAULT NULL::integer, p_edad_hasta integer DEFAULT NULL::integer, p_enfermedad text DEFAULT NULL::text, p_fecha_desde date DEFAULT NULL::date, p_fecha_hasta date DEFAULT NULL::date)
  RETURNS jsonb
@@ -23,10 +24,6 @@ begin
   ) then raise exception 'Campo inválido'; end if;
   v_principal := public.reporte_encuesta(v_campo,p_edad_desde,p_edad_hasta,
                                          p_enfermedad,p_fecha_desde,p_fecha_hasta);
-  if v_principal->>'mensaje' is not null then
-    return jsonb_build_object('mensaje',v_principal->>'mensaje',
-      'total',null,'total_pruebas',null,'edades','[]'::jsonb,'tortas','{}'::jsonb);
-  end if;
   with franjas(pos,etiqueta,edad_min,edad_max) as (
     values (1,'0–19 años',0,19),(2,'20–39 años',20,39),
            (3,'40–59 años',40,59),(4,'60–79 años',60,79),
@@ -44,8 +41,8 @@ begin
     group by f.pos,f.etiqueta
   )
   select jsonb_agg(jsonb_build_object('etiqueta',etiqueta,
-    'cantidad',case when cantidad in (1,2) then null else cantidad end,
-    'oculto',cantidad in (1,2)) order by pos)
+    'cantidad',cantidad,
+    'oculto',false) order by pos)
   into v_edades from conteos
   where pos<=5 or cantidad>0;
   if p_campo is null or p_campo='' then
