@@ -121,6 +121,45 @@
  function filtrado(f){
    return Boolean(f.campo||f.edadDesde!==null||f.edadHasta!==null||f.enfermedad||f.desde||f.hasta);
  }
+
+ const leyendaIds={tortaPrincipal:'leyendaPrincipal',tortaAmbiente:'leyendaAmbiente',tortaCobertura:'leyendaCobertura'};
+ const fmtPorcentaje=x=>new Intl.NumberFormat('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1}).format(x)+'%';
+ function mostrarLeyenda(canvasId,filas,colores){
+   const box=$(leyendaIds[canvasId]);if(!box)return;
+   box.replaceChildren();
+   const total=filas.reduce((sum,item)=>sum+item.cantidad,0);
+   if(!total){const empty=document.createElement('p');empty.className='legend-empty';empty.textContent='Sin resultados disponibles';box.appendChild(empty);return}
+   for(let i=0;i<filas.length;i++){
+     const fila=filas[i],item=document.createElement('div'),swatch=document.createElement('span'),
+     nombre=document.createElement('span'),metricas=document.createElement('span'),
+     cantidad=document.createElement('span'),porcentaje=document.createElement('span');
+     item.className='legend-entry';
+     swatch.className='legend-swatch';swatch.style.backgroundColor=colores[i];
+     nombre.className='legend-name';nombre.textContent=fila.etiqueta;
+     metricas.className='legend-metrics';
+     cantidad.className='legend-count';cantidad.textContent=fila.cantidad+' respuestas';
+     porcentaje.className='legend-percent';porcentaje.textContent=fmtPorcentaje((fila.cantidad/total)*100);
+     metricas.append(cantidad,porcentaje);item.append(swatch,nombre,metricas);box.appendChild(item);
+   }
+ }
+ const etiquetasSobreBarras={
+   id:'etiquetasSobreBarras',
+   afterDatasetsDraw(chart){
+     const datos=chart.$datosEdades||[],total=chart.$totalEncuestados;
+     const meta=chart.getDatasetMeta(0),ctx=chart.ctx;
+     ctx.save();ctx.fillStyle='#18364c';ctx.textAlign='center';ctx.textBaseline='bottom';
+     ctx.font='700 12px system-ui, sans-serif';
+     meta.data.forEach((bar,i)=>{
+       const item=datos[i],n=Number(item?.cantidad);
+       if(!item||item.oculto||!Number.isFinite(n))return;
+       const pct=total>0?' · '+fmtPorcentaje(n/total*100):'';
+       const label=n+pct;
+       const y=Math.max(chart.chartArea.top+14,bar.y-7);
+       ctx.fillText(label,bar.x,y);
+     });
+     ctx.restore();
+   }
+ };
  function pintarTorta(canvasId,sinId,resultado){
    if(pies[canvasId]){pies[canvasId].destroy();delete pies[canvasId]}
    const data=resultado||{};
@@ -129,30 +168,33 @@
    if(agrupadas>0)rows.push({etiqueta:'Otras respuestas agrupadas',cantidad:agrupadas});
    const message=$(sinId);
    message.classList.toggle('hide',rows.length>0);
-   if(!rows.length){return []}
+   if(!rows.length){mostrarLeyenda(canvasId,[],[]);return []}
    const valores=rows.map(x=>x.cantidad),suma=valores.reduce((a,b)=>a+b,0);
+   const colores=rows.map((x,i)=>x.etiqueta==='Otras respuestas agrupadas'?'#A2AFBE':paleta[i%paleta.length]);
+   mostrarLeyenda(canvasId,rows,colores);
    pies[canvasId]=new Chart($(canvasId),{
      type:'pie',
      data:{
        labels:rows.map(x=>x.etiqueta),
-       datasets:[{data:valores,backgroundColor:rows.map((x,i)=>x.etiqueta==='Otras respuestas agrupadas'?'#A2AFBE':paleta[i%paleta.length]),borderColor:'#fff',borderWidth:3,hoverOffset:9}]
+       datasets:[{data:valores,backgroundColor:colores,borderColor:'#fff',borderWidth:3,hoverOffset:9}]
      },
      options:{
        responsive:true,maintainAspectRatio:false,
        plugins:{
-         legend:{position:'bottom',labels:{usePointStyle:true,padding:13,boxWidth:12,font:{size:12,weight:'600'}}},
+         legend:{display:false},
          tooltip:{callbacks:{label:ctx=>' '+ctx.label+': '+ctx.parsed+' ('+(suma?((ctx.parsed/suma)*100).toFixed(1):'0')+'% de menciones)'}}
        }
      }
    });
    return rows;
  }
- function pintarEdades(edades){
+ function pintarEdades(edades,total){
    if(barras)barras.destroy();
    const barrasDatos=Array.isArray(edades)?edades:[];
    const nombres=barrasDatos.map(x=>x.etiqueta);
    barras=new Chart($('barrasEdades'),{
      type:'bar',
+     plugins:[etiquetasSobreBarras],
      data:{labels:nombres,datasets:[{
        label:'Personas encuestadas',
        data:barrasDatos.map(x=>x.oculto?0:Number(x.cantidad)||0),
@@ -161,6 +203,7 @@
      }]},
      options:{
        responsive:true,maintainAspectRatio:false,
+       layout:{padding:{top:20}},
        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>barrasDatos[ctx.dataIndex]?.oculto?'Cantidad reservada (1 o 2 personas)':' '+ctx.parsed.y+' personas'}}},
        scales:{
          x:{grid:{display:false},ticks:{color:'#405B71',maxRotation:30,minRotation:0}},
@@ -168,6 +211,9 @@
        }
      }
    });
+   barras.$datosEdades=barrasDatos;
+   barras.$totalEncuestados=Number(total)||0;
+   barras.update('none');
  }
  function detalle(rows,title){
    nombreDetalle=title;ultimoDetalle=rows;
@@ -219,8 +265,8 @@
      $('tituloPrincipal').textContent=isFiltered?etiquetaCampo:'Enfermedades declaradas';
      $('subtituloPrincipal').textContent=isFiltered?'Distribución de respuestas del segmento seleccionado.':'Personas que mencionaron cada condición; pueden declarar más de una.';
      const tortas=data?.tortas||{};
-     if(data?.mensaje){estado(data.mensaje,false);pintarEdades([]);detalle([],etiquetaCampo);pintarTorta('tortaPrincipal','sinPrincipal',{});return}
-     pintarEdades(data?.edades||[]);
+     if(data?.mensaje){estado(data.mensaje,false);pintarEdades([],null);detalle([],etiquetaCampo);pintarTorta('tortaPrincipal','sinPrincipal',{});return}
+     pintarEdades(data?.edades||[],cantidad);
      const main=tortas[isFiltered?'seleccion':'enfermedades']||{};
      const displayed=pintarTorta('tortaPrincipal','sinPrincipal',main);
      if(!isFiltered){
