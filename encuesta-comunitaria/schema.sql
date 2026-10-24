@@ -6,8 +6,11 @@ create table if not exists public.encuesta_comunitaria (
   fecha date not null default current_date,
   edad integer check (edad between 0 and 120),
   enfermedades text[] not null default '{}',
-  respuestas jsonb not null default '{}'::jsonb
+  respuestas jsonb not null default '{}'::jsonb,
+  es_prueba boolean not null default false,
+  lote_prueba text
 );
+create index if not exists encuesta_comunitaria_pruebas_idx on public.encuesta_comunitaria(lote_prueba) where es_prueba = true;
 create index if not exists encuesta_comunitaria_fecha_idx on public.encuesta_comunitaria(fecha);
 create index if not exists encuesta_comunitaria_edad_idx on public.encuesta_comunitaria(edad);
 create index if not exists encuesta_comunitaria_enfermedades_idx on public.encuesta_comunitaria using gin(enfermedades);
@@ -22,8 +25,10 @@ grant insert on public.encuesta_comunitaria to anon, authenticated;
 drop policy if exists encuesta_insertar on public.encuesta_comunitaria;
 create policy encuesta_insertar on public.encuesta_comunitaria for insert to anon, authenticated
 with check (
-  jsonb_typeof(respuestas) = 'object'
-  and jsonb_array_length(to_jsonb(enfermedades)) <= 12
+  es_prueba = false
+  and lote_prueba is null
+  and jsonb_typeof(respuestas) = 'object'
+  and cardinality(enfermedades) <= 12
 );
 -- Estadísticas públicas agregadas. La API no permite leer encuestas individuales.
 -- Se suprimen grupos pequeños y se usan campos de lista blanca.
@@ -84,6 +89,7 @@ begin
   )
   select jsonb_build_object(
     'total', (select count(*) from filtradas),
+    'total_pruebas', (select count(*) from filtradas where es_prueba = true),
     'datos', coalesce((select jsonb_agg(jsonb_build_object('etiqueta',etiqueta,'cantidad',cantidad) order by cantidad desc)
                        from grupos where cantidad >= 3), '[]'::jsonb),
     'suprimidos', coalesce((select sum(cantidad) from grupos where cantidad < 3),0)
@@ -94,3 +100,7 @@ revoke all on function public.reporte_encuesta(text,int,int,text,date,date) from
 grant execute on function public.reporte_encuesta(text,int,int,text,date,date) to anon, authenticated;
 -- Los filtros de grupos pequeños no garantizan anonimato absoluto ante consultas repetidas.
 -- Antes de una publicación con respuestas reales, aplicar revisión institucional de privacidad.
+
+-- Registros de prueba: es_prueba=true y lote_prueba='ISFT93-DEMO-20261024-01'.
+-- Para eliminarlos en el futuro, ejecutar de forma explícita:
+-- delete from public.encuesta_comunitaria where es_prueba = true and lote_prueba = 'ISFT93-DEMO-20261024-01';
