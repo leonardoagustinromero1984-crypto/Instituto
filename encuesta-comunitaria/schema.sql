@@ -25,8 +25,8 @@ with check (
   jsonb_typeof(respuestas) = 'object'
   and jsonb_array_length(to_jsonb(enfermedades)) <= 12
 );
--- Sólo usuarios autenticados pueden ejecutar el reporte agregado.
--- No permite seleccionar columnas arbitrarias: lista blanca de preguntas.
+-- Estadísticas públicas agregadas. La API no permite leer encuestas individuales.
+-- Se suprimen grupos pequeños y se usan campos de lista blanca.
 create or replace function public.reporte_encuesta(
   p_campo text,
   p_edad_desde int default null,
@@ -38,17 +38,28 @@ create or replace function public.reporte_encuesta(
 language plpgsql stable security definer set search_path = ''
 as $$
 declare resultado jsonb;
+declare n integer;
 begin
-  if auth.uid() is null or not exists (select 1 from public.encuesta_reporteros r where r.user_id = auth.uid()) then
-    raise exception 'Acceso al reporte no autorizado';
-  end if;
+  if p_edad_desde is not null and (p_edad_desde < 0 or p_edad_desde > 120) then raise exception 'Edad inválida'; end if;
+  if p_edad_hasta is not null and (p_edad_hasta < 0 or p_edad_hasta > 120) then raise exception 'Edad inválida'; end if;
+  if p_edad_desde is not null and p_edad_hasta is not null and p_edad_desde > p_edad_hasta then raise exception 'Rango inválido'; end if;
   if p_campo not in (
-    'sexo','nacionalidad','estado_civil','situacion_laboral','vivienda','educacion','educacion_estado',
+    'sexo','estado_civil','situacion_laboral','vivienda','educacion','educacion_estado',
     'accesibilidad','atencion_adecuada','calidad','informacion_centro',
     'ambiente','enfermedades','medicacion','informacion_prevencion','vacunas',
     'automedicacion','dificultad_traslado','controles','cobertura','actividad_fisica',
     'servicios','alimentos','comidas_diarias','comida_principal','contaminacion'
   ) then raise exception 'Campo no permitido'; end if;
+  select count(*) into n from public.encuesta_comunitaria e
+  where (p_edad_desde is null or e.edad >= p_edad_desde)
+    and (p_edad_hasta is null or e.edad <= p_edad_hasta)
+    and (p_enfermedad is null or p_enfermedad = any(e.enfermedades))
+    and (p_fecha_desde is null or e.fecha >= p_fecha_desde)
+    and (p_fecha_hasta is null or e.fecha <= p_fecha_hasta);
+  if n between 1 and 4 then
+    return jsonb_build_object('total',null,'datos','[]'::jsonb,'suprimidos',null,
+      'mensaje','Segmento con menos de 5 encuestas: resultados ocultos');
+  end if;
   with filtradas as (
     select * from public.encuesta_comunitaria e
     where (p_edad_desde is null or e.edad >= p_edad_desde)
@@ -64,10 +75,9 @@ begin
   ), etiquetas as (
     select coalesce(nullif(trim(z.etiqueta),''),'Sin respuesta') as etiqueta
     from valores v cross join lateral (
-      select jsonb_array_elements_text(v.valor) as etiqueta where jsonb_typeof(v.valor) = 'array'
-      union all
-      select case when jsonb_typeof(v.valor) = 'string' then v.valor #>> '{}'
-             else 'Sin respuesta' end where jsonb_typeof(v.valor) <> 'array'
+      select jsonb_array_elements_text(
+        case when jsonb_typeof(v.valor) = 'array' then v.valor else jsonb_build_array(v.valor) end
+      ) as etiqueta
     ) z
   ), grupos as (
     select etiqueta, count(*)::integer cantidad from etiquetas group by etiqueta
@@ -80,7 +90,7 @@ begin
   ) into resultado;
   return resultado;
 end $$;
-revoke all on function public.reporte_encuesta(text,int,int,text,date,date) from public, anon;
-grant execute on function public.reporte_encuesta(text,int,int,text,date,date) to authenticated;
--- Nota: para producción, añadir CAPTCHA/rate limiting y limitar el acceso de reportes
--- a usuarios autorizados (la autenticación por sí sola no define qué compañeros pueden verlos).
+revoke all on function public.reporte_encuesta(text,int,int,text,date,date) from public, anon, authenticated;
+grant execute on function public.reporte_encuesta(text,int,int,text,date,date) to anon, authenticated;
+-- Los filtros de grupos pequeños no garantizan anonimato absoluto ante consultas repetidas.
+-- Antes de una publicación con respuestas reales, aplicar revisión institucional de privacidad.
