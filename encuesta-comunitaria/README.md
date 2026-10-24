@@ -28,22 +28,10 @@ El reporte es accesible para cualquier persona con la dirección web. La supresi
 - Comprobado el despliegue exitoso de GitHub Pages.
 - Pendiente prueba manual de extremo a extremo con un navegador real y al menos una encuesta de prueba.
 
-## Registros de demostración (2026-10-24)
-Se insertaron **5 encuestas ficticias** directamente en Supabase con `es_prueba=true` y `lote_prueba='ISFT93-DEMO-20261024-01'`.
-No corresponden a personas reales. El reporte muestra una advertencia cuando un segmento incluye datos de prueba.
+## Limpieza de registros ficticios (2026-10-24)
+Se eliminaron las 25 encuestas ficticias que pertenecían al lote `ISFT93-DEMO-20261024-01` y tenían `es_prueba=true`. Se verificó que quedaba **1 encuesta sin marca de prueba**; el lote ficticio quedó vacío.
 
-Para verificar antes de limpiar:
-```sql
-select count(*) from public.encuesta_comunitaria
-where es_prueba is true and lote_prueba='ISFT93-DEMO-20261024-01';
-```
-
-**Solo cuando lo soliciten**, eliminarlas con:
-```sql
-delete from public.encuesta_comunitaria
-where es_prueba is true and lote_prueba='ISFT93-DEMO-20261024-01';
-```
-No borrar encuestas sin marca de prueba ni otros lotes.
+El reporte final ya no muestra leyendas ni indicadores sobre encuestas de prueba. Se conserva la protección de grupos pequeños (mínimo cinco encuestas para visualizar estadísticas).
 
 ## Tablero visual (2026-10-24)
 - **Vista general:** enfermedades, contaminación ambiental y cobertura médica en tres tortas; edades en barras a la derecha de enfermedades.
@@ -51,5 +39,4 @@ No borrar encuestas sin marca de prueba ni otros lotes.
 - Franjas sin doble contabilización: 0–19, 20–39, 40–59, 60–79 y 80–100; 101–120 solo si existen encuestados.
 - Colores vivos por categoría, leyendas, porcentaje de menciones y desglose CSV.
 - Migración principal: `reporte_dashboard.sql`, aplicada a Supabase; llama a la RPC existente `reporte_encuesta` para las tortas.
-- Se añadieron **20 encuestas ficticias más** al lote `ISFT93-DEMO-20261024-01`. Hay ahora **25 ficticias en ese lote**, identificadas con `es_prueba=true`; también había 1 encuesta sin marca de prueba, que se preserva.
-- El comando de limpieza anterior borra las **25** muestras de ese lote, pero solo cuando se solicite expresamente.
+- Las 25 encuestas ficticias se eliminaron el 24/10/2026; ninguna fue conservada como dato real.
