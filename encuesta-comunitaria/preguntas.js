@@ -34,7 +34,7 @@ window.ENCUESTA_SECCIONES = [
  {titulo:"Nutrición y contaminación",preguntas:[
   ["alimentos","16. Alimentos consumidos",["Carne","Pollo","Proteínas","Verdura / fruta","Lácteos","Pescado"],"multiple"],
   ["comidas_diarias","17. ¿Cuántas comidas realiza al día?",["1","2","3","4"]],
-  ["comida_principal","18. Comida más importante",["Desayuno","Almuerzo","Merienda","Cena"]],
+  ["comida_principal","18. ¿Qué comidas considerás más importantes? (Podés elegir varias)",["Desayuno","Almuerzo","Merienda","Cena"],"multiple"],
   ["contaminacion","19. Focos de contaminación",["Basura a cielo abierto","Basura acumulada en las calles","Aguas estancadas / cloacas desbordadas","No identifica focos"],"multiple"]
  ]}
 ];
