@@ -31,7 +31,7 @@ with check (
   and cardinality(enfermedades) <= 12
 );
 -- Estadísticas públicas agregadas. La API no permite leer encuestas individuales.
--- Se suprimen grupos pequeños y se usan campos de lista blanca.
+-- Consultas agregadas por campo permitido: incluye datos con una sola encuesta.
 create or replace function public.reporte_encuesta(
   p_campo text,
   p_edad_desde int default null,
@@ -61,10 +61,6 @@ begin
     and (p_enfermedad is null or p_enfermedad = any(e.enfermedades))
     and (p_fecha_desde is null or e.fecha >= p_fecha_desde)
     and (p_fecha_hasta is null or e.fecha <= p_fecha_hasta);
-  if n between 1 and 4 then
-    return jsonb_build_object('total',null,'datos','[]'::jsonb,'suprimidos',null,
-      'mensaje','Segmento con menos de 5 encuestas: resultados ocultos');
-  end if;
   with filtradas as (
     select * from public.encuesta_comunitaria e
     where (p_edad_desde is null or e.edad >= p_edad_desde)
@@ -74,7 +70,7 @@ begin
       and (p_fecha_hasta is null or e.fecha <= p_fecha_hasta)
   ), valores as (
     select case when p_campo = 'enfermedades'
-      then to_jsonb(f.enfermedades)
+      then case when cardinality(f.enfermedades)=0 then to_jsonb(array['Sin enfermedad declarada']::text[]) else to_jsonb(f.enfermedades) end
       else coalesce(f.respuestas -> p_campo, 'null'::jsonb) end as valor
     from filtradas f
   ), etiquetas as (
@@ -91,15 +87,15 @@ begin
     'total', (select count(*) from filtradas),
     'total_pruebas', (select count(*) from filtradas where es_prueba = true),
     'datos', coalesce((select jsonb_agg(jsonb_build_object('etiqueta',etiqueta,'cantidad',cantidad) order by cantidad desc)
-                       from grupos where cantidad >= 3), '[]'::jsonb),
-    'suprimidos', coalesce((select sum(cantidad) from grupos where cantidad < 3),0)
+                       from grupos where cantidad >= 1), '[]'::jsonb),
+    'suprimidos', coalesce((select sum(cantidad) from grupos where cantidad < 1),0)
   ) into resultado;
   return resultado;
 end $$;
 revoke all on function public.reporte_encuesta(text,int,int,text,date,date) from public, anon, authenticated;
 grant execute on function public.reporte_encuesta(text,int,int,text,date,date) to anon, authenticated;
--- Los filtros de grupos pequeños no garantizan anonimato absoluto ante consultas repetidas.
--- Antes de una publicación con respuestas reales, aplicar revisión institucional de privacidad.
+-- ADVERTENCIA: desde una encuesta, los filtros pueden revelar datos de salud individuales.
+-- Para personas reales, restringir el acceso al panel y revisar la privacidad con la institución.
 
 -- Registros de prueba: es_prueba=true y lote_prueba='ISFT93-DEMO-20261024-01'.
 -- Para eliminarlos en el futuro, ejecutar de forma explícita:
