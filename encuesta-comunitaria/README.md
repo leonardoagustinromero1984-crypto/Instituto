@@ -27,3 +27,20 @@ El reporte es accesible para cualquier persona con la dirección web. La supresi
 - Comprobada migración y configuración de permisos SQL.
 - Comprobado el despliegue exitoso de GitHub Pages.
 - Pendiente prueba manual de extremo a extremo con un navegador real y al menos una encuesta de prueba.
+
+## Registros de demostración (2026-10-24)
+Se insertaron **5 encuestas ficticias** directamente en Supabase con `es_prueba=true` y `lote_prueba='ISFT93-DEMO-20261024-01'`.
+No corresponden a personas reales. El reporte muestra una advertencia cuando un segmento incluye datos de prueba.
+
+Para verificar antes de limpiar:
+```sql
+select count(*) from public.encuesta_comunitaria
+where es_prueba is true and lote_prueba='ISFT93-DEMO-20261024-01';
+```
+
+**Solo cuando lo soliciten**, eliminarlas con:
+```sql
+delete from public.encuesta_comunitaria
+where es_prueba is true and lote_prueba='ISFT93-DEMO-20261024-01';
+```
+No borrar encuestas sin marca de prueba ni otros lotes.
