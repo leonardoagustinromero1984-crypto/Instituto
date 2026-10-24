@@ -12,6 +12,10 @@ create index if not exists encuesta_comunitaria_fecha_idx on public.encuesta_com
 create index if not exists encuesta_comunitaria_edad_idx on public.encuesta_comunitaria(edad);
 create index if not exists encuesta_comunitaria_enfermedades_idx on public.encuesta_comunitaria using gin(enfermedades);
 alter table public.encuesta_comunitaria enable row level security;
+-- Lista privada de usuarios que pueden consultar reportes.
+create table if not exists public.encuesta_reporteros (user_id uuid primary key references auth.users(id) on delete cascade);
+alter table public.encuesta_reporteros enable row level security;
+revoke all on public.encuesta_reporteros from public, anon, authenticated;
 revoke all on public.encuesta_comunitaria from public, anon, authenticated;
 grant insert on public.encuesta_comunitaria to anon, authenticated;
 -- Cualquier participante puede enviar la encuesta; nadie puede consultar respuestas individuales por API.
@@ -35,7 +39,9 @@ language plpgsql stable security definer set search_path = ''
 as $$
 declare resultado jsonb;
 begin
-  if auth.uid() is null then raise exception 'Debe iniciar sesión'; end if;
+  if auth.uid() is null or not exists (select 1 from public.encuesta_reporteros r where r.user_id = auth.uid()) then
+    raise exception 'Acceso al reporte no autorizado';
+  end if;
   if p_campo not in (
     'sexo','nacionalidad','estado_civil','situacion_laboral','vivienda','educacion','educacion_estado',
     'accesibilidad','atencion_adecuada','calidad','informacion_centro',
