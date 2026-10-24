@@ -34,12 +34,9 @@
    <button id="limpiar" class="outline-button" type="button">Volver a vista general</button>
   </div>
  </section>
- <section id="avisoPruebas" class="demo-alert hide" role="status"></section>
  <section aria-label="Indicadores de cantidad">
   <div class="stats-layout">
    <div class="stat-tile"><span>Total de encuestas del segmento</span><div class="stat" id="total">—</div></div>
-   <div class="stat-tile"><span>Datos ficticios incluidos</span><div class="stat" id="totalPruebas">—</div></div>
-   <div class="stat-tile"><span>Encuestas sin marca de prueba</span><div class="stat" id="totalNoPruebas">—</div></div>
   </div>
  </section>
  <p id="mensaje" class="status-message" role="status" aria-live="polite"></p>
@@ -250,12 +247,6 @@
      if(error)throw error;
      const cantidad=data?.total;
      $('total').textContent=cantidad??'—';
-     $('totalPruebas').textContent=data?.total_pruebas??'—';
-     $('totalNoPruebas').textContent=cantidad===null||cantidad===undefined?'—':Math.max(0,Number(cantidad)-Number(data?.total_pruebas||0));
-     const pruebas=Number(data?.total_pruebas||0);
-     const aviso=$('avisoPruebas');
-     aviso.classList.toggle('hide',pruebas===0);
-     aviso.textContent=pruebas>0?'MODO DEMOSTRACIÓN · '+pruebas+' encuestas ficticias incluidas en este segmento. Están identificadas para borrarlas más adelante y no deben interpretarse como datos reales.':'';
      $('indicadoresExtra').classList.toggle('hide',isFiltered);
      $('nombreVista').textContent=isFiltered?'Vista segmentada':'Vista general';
      $('tituloVista').textContent=isFiltered?'Resultados del filtro seleccionado':'Indicadores principales';
