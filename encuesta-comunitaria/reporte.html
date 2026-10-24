@@ -1,48 +1,255 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reporte de encuesta | Instituto</title><link rel="stylesheet" href="style.css"></head><body>
-<header><div class="shell"><div class="brand"><div class="mark" aria-label="Identificación ISFT 93">93</div><div><small>ISFT N.º 93 · Tecnicatura Superior en Enfermería</small><strong>Panel de investigación comunitaria</strong></div></div><span class="kicker">Análisis estadístico</span><h1>Resultados de la encuesta</h1><p>Indicadores generales y por segmentos para el diagnóstico sociocomunitario.</p><a href="index.html">Ir a la carga</a></div></header><main class="shell">
-<div id="dashboard"><section class="note" role="note">Reporte de acceso libre: contiene únicamente resultados agrupados. Las encuestas individuales no están disponibles para consulta.</section><section class="card"><div class="actions"><h2>Filtros del reporte</h2></div>
-<div class="grid"><div><label for="campo">Pregunta / sección</label><select id="campo"></select></div><div><label>Edad desde</label><input type="number" id="minEdad" min="0" max="120"></div><div><label>Edad hasta</label><input type="number" id="maxEdad" min="0" max="120"></div><div><label>Enfermedad</label><select id="enfermedad"><option value="">Todas</option></select></div><div><label>Fecha desde</label><input type="date" id="desde"></div><div><label>Fecha hasta</label><input type="date" id="hasta"></div></div>
-<p class="actions"><button id="consultar" type="button">Actualizar gráficos</button><button id="limpiar" type="button">Quitar filtros</button></p></section>
-<section id="avisoPruebas" class="note hide" role="status"></section>
-<section class="card"><h2>Resultado general y segmentado</h2><p class="muted">Cada opción se cuenta por separado en preguntas múltiples. Se ocultan categorías con menos de 3 respuestas y segmentos de menos de 5 personas.</p><div class="grid"><div><div class="stat" id="total">—</div><div>Personas encuestadas en el segmento</div></div><div><div class="stat" id="suprimidos">—</div><div>Respuestas en categorías pequeñas no mostradas</div></div></div><p id="mensaje" role="status"></p></section>
-<div class="grid"><section class="card"><h2>Gráfico de torta</h2><canvas id="torta" class="chart" aria-label="Distribución porcentual"></canvas></section><section class="card"><h2>Gráfico de barras</h2><canvas id="barras" class="chart" aria-label="Cantidad por respuesta"></canvas></section></div>
-<section class="card"><h2>Tabla de resultados</h2><div id="tabla"></div><button id="csv" type="button">Descargar CSV agregado</button></section></div>
-<footer>Los resultados son estadísticos, no historias clínicas ni registros identificables.</footer></main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script><script src="config.js"></script><script src="preguntas.js"></script><script>
-const cfg=ENCUESTA_CONFIG,$=id=>document.getElementById(id);
-let client=null,torta=null,barras=null,ultimos=[];
-for(const opt of ENCUESTA_CAMPOS_REPORTE){$('campo').add(new Option(opt.label,opt.value))}
-for(const x of ['Hipertensión','Diabetes','Enfermedades respiratorias','Oncológicas','Otras'])$('enfermedad').add(new Option(x,x));
-if(cfg.supabaseUrl&&cfg.supabaseAnonKey){client=supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey)}
-$('limpiar').onclick=()=>{for(const id of ['minEdad','maxEdad','enfermedad','desde','hasta'])$(id).value='';consultar()};
-$('consultar').onclick=consultar;
-async function consultar(){
- const parametros={p_campo:$('campo').value,p_edad_desde:$('minEdad').value===''?null:Number($('minEdad').value),p_edad_hasta:$('maxEdad').value===''?null:Number($('maxEdad').value),p_enfermedad:$('enfermedad').value||null,p_fecha_desde:$('desde').value||null,p_fecha_hasta:$('hasta').value||null};
- if(parametros.p_edad_desde!==null&&parametros.p_edad_hasta!==null&&parametros.p_edad_desde>parametros.p_edad_hasta){$('mensaje').textContent='Rango de edad inválido';return}
- if(!client){$('mensaje').textContent='No está configurada la conexión con la base de datos';return}
- $('mensaje').textContent='Consultando…';
- const {data,error}=await client.rpc('reporte_encuesta',parametros);
- if(error){$('mensaje').textContent='No se pudo consultar: '+error.message;return}
- $('mensaje').textContent=data.mensaje||'';$('total').textContent=data.total??'—';$('suprimidos').textContent=data.suprimidos??'—';
- const aviso=$('avisoPruebas'),pruebas=Number(data.total_pruebas||0);
- aviso.classList.toggle('hide',pruebas===0);
- aviso.textContent=pruebas>0?'⚠️ DATOS DE PRUEBA: este resultado incluye '+pruebas+' encuesta(s) ficticia(s), identificadas para su eliminación posterior. No usar como diagnóstico real.':'';
- ultimos=data.datos||[];
- const visuales=[...ultimos];const ocultas=Number(data.suprimidos||0);
- if(ocultas>0)visuales.push({etiqueta:'Otras respuestas (agrupadas)',cantidad:ocultas});
- const labels=visuales.map(x=>x.etiqueta),valores=visuales.map(x=>x.cantidad);
- if(torta)torta.destroy();if(barras)barras.destroy();
- const colors=['#007a9a','#3c91bd','#71bdd0','#f1b95d','#e57e6e','#7e86b8','#55a890','#d5a0cc'];
- torta=new Chart($('torta'),{type:'pie',data:{labels,datasets:[{data:valores,backgroundColor:labels.map((_,i)=>colors[i%colors.length])}]},options:{responsive:true}});
- barras=new Chart($('barras'),{type:'bar',data:{labels,datasets:[{label:'Respuestas',data:valores,backgroundColor:'#087b9b'}]},options:{responsive:true,scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
- const tabla=$('tabla');tabla.replaceChildren();
- for(const item of ultimos){const p=document.createElement('p');p.textContent=item.etiqueta+': '+item.cantidad;tabla.append(p)}
- if(!ultimos.length)tabla.textContent='No hay categorías visibles con al menos 3 respuestas.';
-}
-$('csv').onclick=()=>{
- const lines=[['Respuesta','Cantidad'],...ultimos.map(x=>[x.etiqueta,x.cantidad])];
- const csv=lines.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\r\n');
- const link=document.createElement('a');link.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));link.download='reporte_encuesta.csv';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000);
-};
-if(client)consultar();else $('mensaje').textContent='Falta configurar la base de datos.';
-</script></body></html>
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#07687f">
+<title>Observatorio comunitario · ISFT N.º 93</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+ <div class="shell">
+  <div class="brand"><div class="mark" aria-label="Instituto 93">93</div><div><small>ISFT N.º 93 · Tecnicatura Superior en Enfermería</small><strong>Observatorio sociocomunitario</strong></div></div>
+  <span class="kicker">Tablero estadístico interactivo</span>
+  <h1>Resultados de las encuestas</h1>
+  <p>Una mirada rápida a la salud, el ambiente y las condiciones de la comunidad.</p>
+  <a href="index.html">← Cargar una nueva encuesta</a>
+ </div>
+</header>
+<main class="shell dashboard-page">
+ <section class="card filters-card">
+  <div class="heading-with-icon"><div><div class="step">Explorá los resultados</div><h2>Filtrar información</h2></div><span class="filter-icon" aria-hidden="true">⚙</span></div>
+  <p class="muted">Sin filtros vas a ver los tres indicadores principales. Si elegís una pregunta o segmento, se mostrará una única torta y las edades del grupo seleccionado.</p>
+  <div class="grid">
+   <div><label for="campo">Indicador / pregunta</label><select id="campo"><option value="">Vista general · 3 indicadores</option></select></div>
+   <div><label for="enfermedad">Filtrar personas por enfermedad</label><select id="enfermedad"><option value="">Todas las personas</option></select></div>
+   <div><label for="minEdad">Edad desde</label><input id="minEdad" type="number" min="0" max="120" placeholder="0"></div>
+   <div><label for="maxEdad">Edad hasta</label><input id="maxEdad" type="number" min="0" max="120" placeholder="120"></div>
+   <div><label for="desde">Fecha desde</label><input id="desde" type="date"></div>
+   <div><label for="hasta">Fecha hasta</label><input id="hasta" type="date"></div>
+  </div>
+  <div class="actions filter-actions">
+   <button id="consultar" type="button">Aplicar filtros</button>
+   <button id="limpiar" class="outline-button" type="button">Volver a vista general</button>
+  </div>
+ </section>
+ <section id="avisoPruebas" class="demo-alert hide" role="status"></section>
+ <section aria-label="Indicadores de cantidad">
+  <div class="stats-layout">
+   <div class="stat-tile"><span>Total de encuestas del segmento</span><div class="stat" id="total">—</div></div>
+   <div class="stat-tile"><span>Datos ficticios incluidos</span><div class="stat" id="totalPruebas">—</div></div>
+   <div class="stat-tile"><span>Encuestas sin marca de prueba</span><div class="stat" id="totalNoPruebas">—</div></div>
+  </div>
+ </section>
+ <p id="mensaje" class="status-message" role="status" aria-live="polite"></p>
+ <div class="view-top">
+  <div class="section-heading"><div><div class="step" id="nombreVista">Vista general</div><h2 id="tituloVista">Indicadores principales</h2></div><span class="pill" id="alcance">Toda la comunidad</span></div>
+  <p class="muted" id="subtituloVista">Tres gráficos de torta y barras por edades. Los gráficos de respuestas múltiples representan menciones, no personas distintas.</p>
+ </div>
+ <div class="dashboard-pairs">
+  <section class="card chart-card" aria-label="Torta de enfermedades">
+    <div class="chart-eyebrow">Salud de la población</div><h3 id="tituloPrincipal">Enfermedades declaradas</h3>
+    <p id="subtituloPrincipal" class="muted chart-caption">Participantes que mencionaron cada condición.</p>
+    <div class="canvas-wrap"><canvas id="tortaPrincipal" role="img" aria-label="Gráfico de torta de enfermedades o indicador seleccionado"></canvas></div>
+    <p class="empty-chart hide" id="sinPrincipal">No hay datos suficientes para mostrar este gráfico.</p>
+  </section>
+  <section class="card chart-card" aria-label="Barras de grupos de edad">
+    <div class="chart-eyebrow">Perfil demográfico</div><h3>Distribución por edades</h3>
+    <p class="muted chart-caption">Cantidad de personas agrupadas en intervalos sin superposición.</p>
+    <div class="canvas-wrap"><canvas id="barrasEdades" role="img" aria-label="Gráfico de barras por intervalos de edad"></canvas></div>
+    <p class="muted chart-footnote">0–19, 20–39, 40–59, 60–79 y 80–100 años. Grupos de 1 o 2 se reservan.</p>
+  </section>
+ </div>
+ <div class="dashboard-pairs" id="indicadoresExtra">
+  <section class="card chart-card" aria-label="Torta de problemas ambientales">
+    <div class="chart-eyebrow">Entorno y condiciones del barrio</div><h3>Problemas ambientales</h3>
+    <p class="muted chart-caption">Focos de contaminación identificados en las encuestas.</p>
+    <div class="canvas-wrap"><canvas id="tortaAmbiente" role="img" aria-label="Gráfico de focos de contaminación"></canvas></div>
+    <p class="empty-chart hide" id="sinAmbiente">Sin datos suficientes.</p>
+  </section>
+  <section class="card chart-card" aria-label="Torta de cobertura de salud">
+    <div class="chart-eyebrow">Acceso al sistema de salud</div><h3>Cobertura médica</h3>
+    <p class="muted chart-caption">Obra social, prepaga, prestación pública o ninguna.</p>
+    <div class="canvas-wrap"><canvas id="tortaCobertura" role="img" aria-label="Gráfico de tipos de cobertura médica"></canvas></div>
+    <p class="empty-chart hide" id="sinCobertura">Sin datos suficientes.</p>
+  </section>
+ </div>
+ <section class="card">
+  <div class="heading-with-icon"><div><div class="step">Lectura detallada</div><h2 id="tituloTabla">Detalle de enfermedades</h2></div><button id="csv" class="outline-button" type="button">Descargar CSV</button></div>
+  <div id="tabla" class="table-scroll" aria-live="polite">Consultando…</div>
+  <p class="muted fine-print">Por privacidad se agrupan las categorías con menos de tres menciones y no se muestran los resultados cuando un filtro identifica menos de cinco encuestas. Los totales de preguntas con selección múltiple pueden superar la cantidad de personas.</p>
+ </section>
+ <footer>ISFT N.º 93 · Relevamiento académico y diagnóstico sociocomunitario. Datos estadísticos agregados; no se muestran encuestas individuales.</footer>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="config.js"></script>
+<script src="preguntas.js"></script>
+<script>
+(function(){
+ 'use strict';
+ const $=id=>document.getElementById(id);
+ const cfg=window.ENCUESTA_CONFIG||{};
+ const client=(cfg.supabaseUrl&&cfg.supabaseAnonKey&&window.supabase)?
+   window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey):null;
+ const pies={};
+ let barras=null,ultimoDetalle=[],nombreDetalle='',solicitud=0;
+ const paleta=['#F04452','#276EF1','#00A885','#FF9F1C','#8256D8','#00A8DB','#D946A8','#567089','#E36C2D','#4C9F38'];
+ const edadColores=['#1E72E6','#00A88F','#FF9C32','#8C59DE','#E5485A','#55778C'];
+ const campos=window.ENCUESTA_CAMPOS_REPORTE||[];
+ for(const campo of campos){if(campo.value!=='nacionalidad')$('campo').add(new Option(campo.label,campo.value))}
+ for(const enfermedad of ['Hipertensión','Diabetes','Enfermedades respiratorias','Oncológicas','Otras']){
+   $('enfermedad').add(new Option(enfermedad,enfermedad));
+ }
+ function estado(texto,error){
+   $('mensaje').textContent=texto||'';
+   $('mensaje').classList.toggle('err',!!error);
+ }
+ function numero(id){
+   const text=$(id).value.trim();
+   return text===''?null:Number(text);
+ }
+ function filtros(){
+   return {
+     campo:$('campo').value.trim(),
+     edadDesde:numero('minEdad'),edadHasta:numero('maxEdad'),
+     enfermedad:$('enfermedad').value||null,
+     desde:$('desde').value||null,hasta:$('hasta').value||null
+   };
+ }
+ function filtrado(f){
+   return Boolean(f.campo||f.edadDesde!==null||f.edadHasta!==null||f.enfermedad||f.desde||f.hasta);
+ }
+ function pintarTorta(canvasId,sinId,resultado){
+   if(pies[canvasId]){pies[canvasId].destroy();delete pies[canvasId]}
+   const data=resultado||{};
+   const rows=(data.datos||[]).map(x=>({etiqueta:x.etiqueta,cantidad:Number(x.cantidad)||0}));
+   const agrupadas=Number(data.suprimidos)||0;
+   if(agrupadas>0)rows.push({etiqueta:'Otras respuestas agrupadas',cantidad:agrupadas});
+   const message=$(sinId);
+   message.classList.toggle('hide',rows.length>0);
+   if(!rows.length){return []}
+   const valores=rows.map(x=>x.cantidad),suma=valores.reduce((a,b)=>a+b,0);
+   pies[canvasId]=new Chart($(canvasId),{
+     type:'doughnut',
+     data:{
+       labels:rows.map(x=>x.etiqueta),
+       datasets:[{data:valores,backgroundColor:rows.map((x,i)=>x.etiqueta==='Otras respuestas agrupadas'?'#A2AFBE':paleta[i%paleta.length]),borderColor:'#fff',borderWidth:3,hoverOffset:9}]
+     },
+     options:{
+       responsive:true,maintainAspectRatio:false,cutout:'46%',
+       plugins:{
+         legend:{position:'bottom',labels:{usePointStyle:true,padding:13,boxWidth:12,font:{size:12,weight:'600'}}},
+         tooltip:{callbacks:{label:ctx=>' '+ctx.label+': '+ctx.parsed+' ('+(suma?((ctx.parsed/suma)*100).toFixed(1):'0')+'% de menciones)'}}
+       }
+     }
+   });
+   return rows;
+ }
+ function pintarEdades(edades){
+   if(barras)barras.destroy();
+   const barrasDatos=Array.isArray(edades)?edades:[];
+   const nombres=barrasDatos.map(x=>x.etiqueta);
+   barras=new Chart($('barrasEdades'),{
+     type:'bar',
+     data:{labels:nombres,datasets:[{
+       label:'Personas encuestadas',
+       data:barrasDatos.map(x=>x.oculto?0:Number(x.cantidad)||0),
+       backgroundColor:barrasDatos.map((x,i)=>x.oculto?'#B9C4CF':edadColores[i%edadColores.length]),
+       borderRadius:8,maxBarThickness:65
+     }]},
+     options:{
+       responsive:true,maintainAspectRatio:false,
+       plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>barrasDatos[ctx.dataIndex]?.oculto?'Cantidad reservada (1 o 2 personas)':' '+ctx.parsed.y+' personas'}}},
+       scales:{
+         x:{grid:{display:false},ticks:{color:'#405B71',maxRotation:30,minRotation:0}},
+         y:{beginAtZero:true,grid:{color:'#E7EEF5'},ticks:{precision:0,stepSize:1,color:'#405B71'}}
+       }
+     }
+   });
+ }
+ function detalle(rows,title){
+   nombreDetalle=title;ultimoDetalle=rows;
+   $('tituloTabla').textContent='Detalle · '+title;
+   const caja=$('tabla');caja.replaceChildren();
+   if(!rows.length){caja.textContent='No hay categorías visibles en este segmento.';return}
+   const tabla=document.createElement('table'),head=document.createElement('thead'),tr=document.createElement('tr');
+   ['Respuesta','Cantidad','Porcentaje de menciones'].forEach(t=>{const th=document.createElement('th');th.textContent=t;tr.appendChild(th)});
+   head.appendChild(tr);tabla.appendChild(head);
+   const tbody=document.createElement('tbody'),suma=rows.reduce((acc,r)=>acc+r.cantidad,0);
+   for(const row of rows){const tr=document.createElement('tr');
+     [row.etiqueta,String(row.cantidad),suma?((row.cantidad/suma)*100).toFixed(1)+'%':'—'].forEach(t=>{const td=document.createElement('td');td.textContent=t;tr.appendChild(td)});
+     tbody.appendChild(tr)}
+   tabla.appendChild(tbody);caja.appendChild(tabla);
+ }
+ async function consultar(){
+   const f=filtros();
+   if((f.edadDesde!==null&&(!Number.isInteger(f.edadDesde)||f.edadDesde<0||f.edadDesde>120))||
+      (f.edadHasta!==null&&(!Number.isInteger(f.edadHasta)||f.edadHasta<0||f.edadHasta>120))||
+      (f.edadDesde!==null&&f.edadHasta!==null&&f.edadDesde>f.edadHasta)){
+     estado('Revisá el rango de edad: debe estar entre 0 y 120 años.',true);return}
+   if(f.desde&&f.hasta&&f.desde>f.hasta){estado('La fecha desde no puede superar la fecha hasta.',true);return}
+   if(!client){estado('No se pudo conectar a Supabase. Revisá la configuración.',true);return}
+   const seq=++solicitud;
+   const isFiltered=filtrado(f);
+   $('consultar').disabled=true;estado('Actualizando los gráficos…',false);
+   try{
+     const {data,error}=await client.rpc('reporte_dashboard',{
+       p_campo:isFiltered?(f.campo||'enfermedades'):null,
+       p_edad_desde:f.edadDesde,p_edad_hasta:f.edadHasta,
+       p_enfermedad:f.enfermedad,p_fecha_desde:f.desde,p_fecha_hasta:f.hasta
+     });
+     if(seq!==solicitud)return;
+     if(error)throw error;
+     const cantidad=data?.total;
+     $('total').textContent=cantidad??'—';
+     $('totalPruebas').textContent=data?.total_pruebas??'—';
+     $('totalNoPruebas').textContent=cantidad===null||cantidad===undefined?'—':Math.max(0,Number(cantidad)-Number(data?.total_pruebas||0));
+     const pruebas=Number(data?.total_pruebas||0);
+     const aviso=$('avisoPruebas');
+     aviso.classList.toggle('hide',pruebas===0);
+     aviso.textContent=pruebas>0?'MODO DEMOSTRACIÓN · '+pruebas+' encuestas ficticias incluidas en este segmento. Están identificadas para borrarlas más adelante y no deben interpretarse como datos reales.':'';
+     $('indicadoresExtra').classList.toggle('hide',isFiltered);
+     $('nombreVista').textContent=isFiltered?'Vista segmentada':'Vista general';
+     $('tituloVista').textContent=isFiltered?'Resultados del filtro seleccionado':'Indicadores principales';
+     $('alcance').textContent=isFiltered?'Filtros activos':'Toda la comunidad';
+     $('subtituloVista').textContent=isFiltered?'Una torta para el indicador elegido y, a su lado, barras por edades del mismo grupo.':'Tres tortas sobre salud, ambiente y cobertura, más barras independientes de las preguntas.';
+     const etiquetaCampo=campos.find(x=>x.value===f.campo)?.label.split(' · ').slice(-1)[0]||'Enfermedades declaradas';
+     $('tituloPrincipal').textContent=isFiltered?etiquetaCampo:'Enfermedades declaradas';
+     $('subtituloPrincipal').textContent=isFiltered?'Distribución de respuestas del segmento seleccionado.':'Personas que mencionaron cada condición; pueden declarar más de una.';
+     const tortas=data?.tortas||{};
+     if(data?.mensaje){estado(data.mensaje,false);pintarEdades([]);detalle([],etiquetaCampo);pintarTorta('tortaPrincipal','sinPrincipal',{});return}
+     pintarEdades(data?.edades||[]);
+     const main=tortas[isFiltered?'seleccion':'enfermedades']||{};
+     const displayed=pintarTorta('tortaPrincipal','sinPrincipal',main);
+     if(!isFiltered){
+       pintarTorta('tortaAmbiente','sinAmbiente',tortas.contaminacion);
+       pintarTorta('tortaCobertura','sinCobertura',tortas.cobertura);
+     }
+     detalle(displayed,isFiltered?etiquetaCampo:'Enfermedades');
+     estado('',false);
+   }catch(err){if(seq===solicitud)estado('Error al consultar los reportes: '+(err?.message||'desconocido'),true)}
+   finally{if(seq===solicitud)$('consultar').disabled=false}
+ }
+ $('consultar').addEventListener('click',consultar);
+ $('campo').addEventListener('change',consultar);
+ $('enfermedad').addEventListener('change',consultar);
+ $('limpiar').addEventListener('click',()=>{
+   $('campo').value='';
+   for(const id of ['enfermedad','minEdad','maxEdad','desde','hasta'])$(id).value='';
+   consultar()
+ });
+ $('csv').addEventListener('click',()=>{
+   const lines=[['Indicador',nombreDetalle],['Respuesta','Cantidad','Porcentaje']];
+   const suma=ultimoDetalle.reduce((a,b)=>a+b.cantidad,0);
+   for(const x of ultimoDetalle)lines.push([x.etiqueta,x.cantidad,suma?((x.cantidad/suma)*100).toFixed(1)+'%':'']);
+   const text=lines.map(row=>row.map(value=>'"'+String(value).replaceAll('"','""')+'"').join(',')).join('\r\n');
+   const url=URL.createObjectURL(new Blob(['\ufeff'+text],{type:'text/csv;charset=utf-8'}));
+   const a=document.createElement('a');a.href=url;a.download='instituto93-reporte.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ });
+ consultar();
+})();
+</script>
+</body>
+</html>
