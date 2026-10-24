@@ -1,5 +1,4 @@
-// Completar con los datos públicos del proyecto Supabase. NUNCA poner aquí service_role.
 window.ENCUESTA_CONFIG = {
-  supabaseUrl: "",
-  supabaseAnonKey: ""
+  supabaseUrl: "https://tueivdkqbgzsybxxqnhr.supabase.co",
+  supabaseAnonKey: "sb_publishable_7CzREKzqn8YECDHKmY070w_hVNpMkey"
 };
