@@ -49,13 +49,13 @@
     <div class="chart-eyebrow">Salud de la población</div><h3 id="tituloPrincipal">Enfermedades declaradas</h3>
     <p id="subtituloPrincipal" class="muted chart-caption">Participantes que mencionaron cada condición.</p>
     <div class="pie-layout"><div class="canvas-wrap"><canvas id="tortaPrincipal" role="img" aria-label="Gráfico de torta para tortaPrincipal"></canvas></div><div id="leyendaPrincipal" class="custom-legend" aria-label="Leyenda con cantidad y porcentaje"></div></div>
-    <p class="empty-chart hide" id="sinPrincipal">No hay datos suficientes para mostrar este gráfico.</p>
+    <p class="empty-chart hide" id="sinPrincipal">No hay respuestas registradas para este indicador.</p>
   </section>
   <section class="card chart-card" aria-label="Barras de grupos de edad">
     <div class="chart-eyebrow">Perfil demográfico</div><h3>Distribución por edades</h3>
     <p class="muted chart-caption">Cantidad de personas agrupadas en intervalos sin superposición.</p>
     <div class="canvas-wrap"><canvas id="barrasEdades" role="img" aria-label="Gráfico de barras por intervalos de edad"></canvas></div>
-    <p class="muted chart-footnote">0–19, 20–39, 40–59, 60–79 y 80–100 años. Grupos de 1 o 2 se reservan.</p>
+    <p class="muted chart-footnote">0–19, 20–39, 40–59, 60–79 y 80–100 años. Incluye todas las encuestas disponibles.</p>
   </section>
  </div>
  <div class="dashboard-pairs" id="indicadoresExtra">
@@ -75,7 +75,7 @@
  <section class="card">
   <div class="heading-with-icon"><div><div class="step">Lectura detallada</div><h2 id="tituloTabla">Detalle de enfermedades</h2></div><button id="csv" class="outline-button" type="button">Descargar CSV</button></div>
   <div id="tabla" class="table-scroll" aria-live="polite">Consultando…</div>
-  <p class="muted fine-print">Por privacidad se agrupan las categorías con menos de tres menciones y no se muestran los resultados cuando un filtro identifica menos de cinco encuestas. Los totales de preguntas con selección múltiple pueden superar la cantidad de personas.</p>
+  <p class="muted fine-print">Los gráficos se muestran desde una respuesta. En preguntas de selección múltiple, los totales pueden superar la cantidad de personas. Atención: con una sola respuesta, los resultados pueden reflejar información de esa persona.</p>
  </section>
  <footer>ISFT N.º 93 · Relevamiento académico y diagnóstico sociocomunitario. Datos estadísticos agregados; no se muestran encuestas individuales.</footer>
 </main>
@@ -216,7 +216,7 @@
    nombreDetalle=title;ultimoDetalle=rows;
    $('tituloTabla').textContent='Detalle · '+title;
    const caja=$('tabla');caja.replaceChildren();
-   if(!rows.length){caja.textContent='No hay categorías visibles en este segmento.';return}
+   if(!rows.length){caja.textContent='Todavía no hay respuestas para este segmento.';return}
    const tabla=document.createElement('table'),head=document.createElement('thead'),tr=document.createElement('tr');
    ['Respuesta','Cantidad','Porcentaje de menciones'].forEach(t=>{const th=document.createElement('th');th.textContent=t;tr.appendChild(th)});
    head.appendChild(tr);tabla.appendChild(head);
