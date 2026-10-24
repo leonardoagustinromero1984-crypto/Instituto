@@ -10,7 +10,7 @@
 <body>
 <header>
  <div class="shell">
-  <div class="brand"><div class="mark" aria-label="Instituto 93">93</div><div><small>ISFT N.º 93 · Tecnicatura Superior en Enfermería</small><strong>Observatorio sociocomunitario</strong></div></div>
+  <div class="brand"><img class="brand-logo" src="logo-instituto93.webp" width="250" height="129" alt="Escudo e identificación del Instituto Superior 93 San Vicente, Tecnicatura Superior en Enfermería"><div><small>ISFT N.º 93 · Tecnicatura Superior en Enfermería</small><strong>Observatorio sociocomunitario</strong></div></div>
   <span class="kicker">Tablero estadístico interactivo</span>
   <h1>Resultados de las encuestas</h1>
   <p>Una mirada rápida a la salud, el ambiente y las condiciones de la comunidad.</p>
@@ -51,7 +51,7 @@
   <section class="card chart-card" aria-label="Torta de enfermedades">
     <div class="chart-eyebrow">Salud de la población</div><h3 id="tituloPrincipal">Enfermedades declaradas</h3>
     <p id="subtituloPrincipal" class="muted chart-caption">Participantes que mencionaron cada condición.</p>
-    <div class="canvas-wrap"><canvas id="tortaPrincipal" role="img" aria-label="Gráfico de torta de enfermedades o indicador seleccionado"></canvas></div>
+    <div class="pie-layout"><div class="canvas-wrap"><canvas id="tortaPrincipal" role="img" aria-label="Gráfico de torta para tortaPrincipal"></canvas></div><div id="leyendaPrincipal" class="custom-legend" aria-label="Leyenda con cantidad y porcentaje"></div></div>
     <p class="empty-chart hide" id="sinPrincipal">No hay datos suficientes para mostrar este gráfico.</p>
   </section>
   <section class="card chart-card" aria-label="Barras de grupos de edad">
@@ -65,13 +65,13 @@
   <section class="card chart-card" aria-label="Torta de problemas ambientales">
     <div class="chart-eyebrow">Entorno y condiciones del barrio</div><h3>Problemas ambientales</h3>
     <p class="muted chart-caption">Focos de contaminación identificados en las encuestas.</p>
-    <div class="canvas-wrap"><canvas id="tortaAmbiente" role="img" aria-label="Gráfico de focos de contaminación"></canvas></div>
+    <div class="pie-layout"><div class="canvas-wrap"><canvas id="tortaAmbiente" role="img" aria-label="Gráfico de torta para tortaAmbiente"></canvas></div><div id="leyendaAmbiente" class="custom-legend" aria-label="Leyenda con cantidad y porcentaje"></div></div>
     <p class="empty-chart hide" id="sinAmbiente">Sin datos suficientes.</p>
   </section>
   <section class="card chart-card" aria-label="Torta de cobertura de salud">
     <div class="chart-eyebrow">Acceso al sistema de salud</div><h3>Cobertura médica</h3>
     <p class="muted chart-caption">Obra social, prepaga, prestación pública o ninguna.</p>
-    <div class="canvas-wrap"><canvas id="tortaCobertura" role="img" aria-label="Gráfico de tipos de cobertura médica"></canvas></div>
+    <div class="pie-layout"><div class="canvas-wrap"><canvas id="tortaCobertura" role="img" aria-label="Gráfico de torta para tortaCobertura"></canvas></div><div id="leyendaCobertura" class="custom-legend" aria-label="Leyenda con cantidad y porcentaje"></div></div>
     <p class="empty-chart hide" id="sinCobertura">Sin datos suficientes.</p>
   </section>
  </div>
