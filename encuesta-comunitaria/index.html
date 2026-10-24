@@ -1,0 +1,45 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Encuesta sociocomunitaria | Instituto</title><link rel="stylesheet" href="style.css"></head><body>
+<header><div class="shell"><small>ISFT N° 93 · Prácticas profesionalizantes · Enfermería</small><h1>Encuesta sociocomunitaria</h1><a href="reporte.html">Acceso a reportes (requiere cuenta)</a></div></header>
+<main class="shell"><div class="card"><h2>Antes de comenzar</h2><p>La encuesta es voluntaria, anónima y con fines académicos. Puede dejar preguntas sin responder. No registre nombres, DNI ni otros datos que identifiquen a la persona.</p><p class="muted">Una carga representa a una persona encuestada.</p><label><input type="checkbox" id="consiente"> La persona acepta participar voluntariamente.</label></div>
+<form id="encuesta"><section class="card"><h2>Fecha y edad</h2><div class="grid"><div><label for="fecha">Fecha</label><input type="date" id="fecha" required></div><div><label for="edad">Edad (años)</label><input type="number" id="edad" min="0" max="120" placeholder="Opcional"></div></div></section><div id="secciones"></div><div class="card"><div class="actions"><button type="submit" id="guardar">Guardar encuesta</button><span id="estado" role="status"></span></div></div></form>
+<footer>Encuesta académica · Información anónima y agrupada</footer></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="preguntas.js"></script>
+<script>
+const f=document.querySelector('#encuesta'),estado=document.querySelector('#estado');
+document.querySelector('#fecha').value=new Date().toLocaleDateString('en-CA');
+const root=document.querySelector('#secciones');
+for(const sec of ENCUESTA_SECCIONES){
+ const box=document.createElement('section');box.className='card';let h=document.createElement('h2');h.textContent=sec.titulo;box.append(h);
+ for(const [key,label,options,modo] of sec.preguntas){
+  const wrap=document.createElement('div'),title=document.createElement('label');title.textContent=label;wrap.append(title);
+  if(typeof options==='string'){
+   const i=document.createElement('input');i.type=options==='numero'?'number':'text';i.name=key;i.maxLength=150;if(options==='numero')i.min=0;wrap.append(i);
+  } else {
+   const optionsBox=document.createElement('div');optionsBox.className='choices';
+   for(const opt of options){const l=document.createElement('label'),i=document.createElement('input');i.type=modo==='multiple'?'checkbox':'radio';i.name=key;i.value=opt;l.append(i,document.createTextNode(opt));optionsBox.append(l)}
+   wrap.append(optionsBox);
+  }box.append(wrap);
+ }root.append(box)
+}
+f.addEventListener('submit',async e=>{
+ e.preventDefault();estado.textContent='';
+ if(!document.querySelector('#consiente').checked){estado.textContent='Debe confirmar la participación voluntaria';return}
+ const cfg=window.ENCUESTA_CONFIG;
+ if(!cfg.supabaseUrl||!cfg.supabaseAnonKey){estado.textContent='La base de datos aún no fue configurada. No se guardó ninguna respuesta.';estado.className='err';return}
+ const respuestas={};for(const sec of ENCUESTA_SECCIONES)for(const [key,_,options,modo] of sec.preguntas){
+  const checked=[...f.querySelectorAll('[name="'+key+'"]:checked')];
+  if(Array.isArray(options))respuestas[key]=modo==='multiple'?checked.map(n=>n.value):(checked[0]?.value||null);
+  else respuestas[key]=f.elements[key]?.value.trim()||null;
+ }
+ const edades=document.querySelector('#edad').value;let edad=edades===''?null:Number(edades);
+ const btn=document.querySelector('#guardar');btn.disabled=true;estado.textContent='Guardando…';
+ try{
+  const client=supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey);
+  const {error}=await client.from('encuesta_comunitaria').insert({fecha:document.querySelector('#fecha').value,edad,enfermedades:respuestas.enfermedades||[],respuestas});
+  if(error)throw error;
+  f.reset();document.querySelector('#fecha').value=new Date().toLocaleDateString('en-CA');
+  estado.className='ok';estado.textContent='Encuesta guardada correctamente. Puede cargar otra persona.';window.scrollTo({top:0,behavior:'smooth'});
+ }catch(err){estado.className='err';estado.textContent='No se pudo guardar. Verifique conexión/configuración. '+err.message}
+ finally{btn.disabled=false}
+});
+</script></body></html>
